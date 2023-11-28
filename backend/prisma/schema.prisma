@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model profile {
+  profile_id                  String                               @id @db.VarChar(45)
+  username                    String?                              @db.VarChar(45)
+  user_id                     String                               @unique(map: "user_id_UNIQUE") @db.VarChar(45)
+  password_failure_attempt    Int?                                 @default(0)
+  is_password_change_required profile_is_password_change_required?
+  dob                         DateTime?                            @db.Date
+  primary_profile_picture     String?                              @db.VarChar(45)
+  cover_profile_picture       String?                              @db.VarChar(45)
+  update_password_code        Int?
+  status                      profile_status?
+  is_active                   profile_is_active?                   @default(Y)
+  created_at                  DateTime?                            @default(now()) @db.DateTime(0)
+  updated_at                  DateTime?                            @default(now()) @db.DateTime(0)
+  address                     address[]
+  users                       users                                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_profile_1")
+}
+
+model sessions {
+  session_id String              @id @db.VarChar(45)
+  user_id    String              @db.VarChar(45)
+  device_id  String              @db.VarChar(45)
+  is_active  sessions_is_active? @default(N)
+  token      String              @db.VarChar(300)
+  created_at DateTime?           @default(now()) @db.DateTime(0)
+  updated_at DateTime?           @default(now()) @db.DateTime(0)
+  users      users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sessions_1")
+
+  @@index([user_id], map: "fk_sessions_1_idx")
+}
+
+model users {
+  id         String           @id @db.VarChar(45)
+  name       String?          @db.VarChar(45)
+  surname    String?          @db.VarChar(45)
+  email      String?          @unique(map: "email_UNIQUE") @db.VarChar(45)
+  is_active  users_is_active? @default(Y)
+  created_at DateTime?        @default(now()) @db.DateTime(0)
+  updated_at DateTime?        @default(now()) @db.DateTime(0)
+  profile    profile?
+  sessions   sessions[]
+}
+
+model address {
+  id         Int                @id
+  profile_id String?            @db.VarChar(12)
+  lane1      String?            @db.VarChar(60)
+  lane2      String?            @db.VarChar(60)
+  landmark   String?            @db.VarChar(60)
+  city       String?            @db.VarChar(45)
+  state      String?            @db.VarChar(45)
+  pincode    Int?
+  is_active  address_is_active? @default(N)
+  updated_at DateTime?          @default(now()) @db.DateTime(0)
+  profile    profile?           @relation(fields: [profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_address_1")
+
+  @@index([profile_id], map: "fk_address_1_idx")
+}
+
+model password {
+  id         Int                @id @default(autoincrement())
+  user_id    String             @db.VarChar(12)
+  password   String             @db.VarChar(100)
+  is_active  password_is_active
+  updated_at DateTime?          @db.DateTime(0)
+  created_at DateTime?          @default(now()) @db.DateTime(0)
+}
+
+enum sessions_is_active {
+  Y
+  N
+}
+
+enum users_is_active {
+  Y
+  N
+}
+
+enum profile_is_password_change_required {
+  Y
+  N
+}
+
+enum profile_is_active {
+  Y
+  N
+}
+
+enum address_is_active {
+  Y
+  N
+}
+
+enum profile_status {
+  Married
+  Single
+  In_Relationship @map("In Relationship")
+  Divorcee
+  Its_Complicated @map("Its Complicated")
+}
+
+enum password_is_active {
+  Y
+  N
+}
